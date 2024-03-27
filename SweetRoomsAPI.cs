@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
+using System.Reflection;
 
 namespace PolyamorySweetRooms
 {
@@ -33,6 +34,14 @@ namespace PolyamorySweetRooms
             if (ModEntry.currentRoomData.ContainsKey(spouse.Name))
                 return ModEntry.currentRoomData[spouse.Name].startPos;
             return new Point(-1, -1);
+        }
+
+        public void ResetRooms( GameLocation location)
+        {
+            HashSet<string> ___appliedMapOverrides = ModEntry.SHelper.Reflection.GetField<HashSet<string>>(location, "_appliedMapOverrides").GetValue();
+
+            ModEntry.ResetRooms(Game1.player, Utility.getHomeOfFarmer(Game1.player),___appliedMapOverrides);
+
         }
     }
 }

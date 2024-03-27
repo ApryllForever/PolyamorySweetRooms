@@ -18,7 +18,7 @@ namespace PolyamorySweetRooms
 {
     public partial class ModEntry
     {
-
+        public static Dictionary<string, Dictionary<string, string>> relationships = new Dictionary<string, Dictionary<string, string>>();
         public static void FarmHouse_checkAction_Postfix(FarmHouse __instance, Location tileLocation)
         {
             try
@@ -46,19 +46,20 @@ namespace PolyamorySweetRooms
 		{
 			if (!Config.EnableMod || !(__instance is FarmHouse))
 				return true;
-			foreach(var room in ModEntry.currentRoomData.Values)
+            Rectangle spouseRoomRectangle = CharacterSpouseRoomData.DefaultMapSourceRect;
+            foreach (var room in ModEntry.currentRoomData.Values)
             {
-                Rectangle rect = new Rectangle(room.startPos.X + 1, room.startPos.Y + 1, CharacterSpouseRoomData.DefaultMapSourceRect.Width, CharacterSpouseRoomData.DefaultMapSourceRect.Height);
-				if (rect.Contains(x, y))
+                Rectangle rect = new Rectangle(room.startPos.X + 1, room.startPos.Y + 1, spouseRoomRectangle.Width, spouseRoomRectangle.Height);
+                if (rect.Contains(x, y))
                 {
-					__result = true;
-					return false;
+                    __result = true;
+                    return false;
                 }
-			}
-			return true;
-		}
+            }
+            return true;
+        }
 
-		public static void FarmHouse_updateFarmLayout_Prefix(FarmHouse __instance, ref bool ___displayingSpouseRoom)
+        public static void FarmHouse_updateFarmLayout_Prefix(FarmHouse __instance, ref bool ___displayingSpouseRoom)
 		{
 			if (!Config.EnableMod)
 				return;
@@ -296,39 +297,72 @@ namespace PolyamorySweetRooms
 				}
 			}
 
-           // Dictionary<string, string> room_data = SHelper.GameContent.Load<Dictionary<string, string>>("Data\\SpouseRooms");
 
-			//DataLoader.Characters.
+            // Dictionary<string, string> room_data = SHelper.GameContent.Load<Dictionary<string, string>>("Data\\SpouseRooms");
 
-			string map_path = "spouseRooms";
+            Dictionary<string, NPC> spouses = polyamorySweetLoveAPI.GetSpouses(Game1.player, true);
+            CharacterSpouseRoomData characterSpouseRoomData = new CharacterSpouseRoomData();
+            //
+			//var chardata = Game1.characterData.TryGetValue(spouses, out characterSpouseRoomData );
+				
+				//CharacterSpouseRoomData();
 
-			/*
-			if (indexInSpouseMapSheet == -1 && room_data != null && srd.templateName != null && room_data.ContainsKey(srd.templateName))
+			foreach(KeyValuePair<string, NPC> eposa  in spouses)
 			{
-				try
-				{
-					string[] array = room_data[srd.templateName].Split('/', StringSplitOptions.None);
-					map_path = array[0];
-					indexInSpouseMapSheet = int.Parse(array[1]);
-					SMonitor.Log($"Got Data\\SpouseRooms room for template {srd.templateName}: room {map_path}, index {indexInSpouseMapSheet}");
-				}
-				catch (Exception)
-				{
-				}
+				
+
 			}
-			if (indexInSpouseMapSheet == -1 && room_data != null && room_data.ContainsKey(spouse))
+            string map_path = "spouseRooms";
+
+            Dictionary<string, CharacterData> NPCDispositions = SHelper.GameContent.Load<Dictionary<string, CharacterData>>("Data\\Characters");
+			foreach (KeyValuePair<string, CharacterData> kvp in NPCDispositions)
 			{
-				try
+				//Game1.characterData.
+
+				// Dictionary<string, string> relative = kvp.Value.FriendsAndFamily;
 				{
-					string[] array = room_data[spouse].Split('/', StringSplitOptions.None);
-					map_path = array[0];
-					indexInSpouseMapSheet = int.Parse(array[1]);
-					SMonitor.Log($"Got Data\\SpouseRooms room for spouse {spouse}: room {map_path}, index {indexInSpouseMapSheet}");
-				}
-				catch (Exception)
-				{
-				}
-			} */
+					NPC nPC = Game1.getCharacterFromName(kvp.Key);
+					
+
+                var spouseRoom = kvp.Value.SpouseRoom;
+
+/*
+                    Dictionary<string, string> room_data = new Dictionary<string, string>();
+
+                    //room_data.ContainsKey(srd.templateName)
+
+
+                    if (indexInSpouseMapSheet == -1 && spouseRoom != null && srd.templateName != null )
+                    {
+                        try
+                        {
+                            string[] array = room_data[srd.templateName].Split('/', StringSplitOptions.None);
+                            map_path = array[0];
+                            indexInSpouseMapSheet = int.Parse(array[1]);
+                            SMonitor.Log($"Got Data\\SpouseRooms room for template {srd.templateName}: room {map_path}, index {indexInSpouseMapSheet}");
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+                    if (indexInSpouseMapSheet == -1 && room_data != null && room_data.ContainsKey(spouse))
+                    {
+                        try
+                        {
+                            string[] array = room_data[spouse].Split('/', StringSplitOptions.None);
+                            map_path = array[0];
+                            indexInSpouseMapSheet = int.Parse(array[1]);
+                            SMonitor.Log($"Got Data\\SpouseRooms room for spouse {spouse}: room {map_path}, index {indexInSpouseMapSheet}");
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+*/
+                }
+
+            } 
+
 
 
 			if (indexInSpouseMapSheet == -1)
@@ -343,8 +377,28 @@ namespace PolyamorySweetRooms
 					indexInSpouseMapSheet = ModEntry.roomIndexes[spouse];
 					SMonitor.Log($"Got vanilla index for spouse {spouse}: {indexInSpouseMapSheet}");
 				}
+				//else if(spouses.ContainsKey(spouse))
+				//{
+					/*
+					 * This won't fucking work!!! This will not get anything! The Spouse Room Data Model does not point to a Map Path. We must make custom map apths, after all!
+					 * 
+                    NPC npc = Game1.getCharacterFromName(spouse);
+                    foreach (KeyValuePair<string,NPC> kvp in spouses )
+					{ 
+					}
+				
+                    Dictionary<string, CharacterData> CharDict = SHelper.GameContent.Load<Dictionary<string, CharacterData>>("Data\\Characters");
+					foreach (KeyValuePair<string, CharacterData> kvp in NPCDispositions)
+					{
+						NPC nPC = Game1.getCharacterFromName(kvp.Key);
+
+						var spouseRoom = kvp.Value.SpouseRoom;
+						//Map map = spouseRoom.MapAsset
+					}*/
+               // }
 				else
 				{
+
 					SMonitor.Log($"Could not find spouse room map for {spouse}", LogLevel.Debug);
 					return;
 				}

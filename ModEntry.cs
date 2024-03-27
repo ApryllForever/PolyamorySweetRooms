@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using xTile;
+using StardewModdingAPI.Events;
 
 namespace PolyamorySweetRooms
 {
@@ -74,12 +75,12 @@ namespace PolyamorySweetRooms
                original: AccessTools.Method(typeof(DecoratableLocation), nameof(DecoratableLocation.MakeMapModifications)),
                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.DecoratableLocation_MakeMapModifications_Postfix))
             );
-            /*
+            
             harmony.Patch(
                original: AccessTools.Method(typeof(DecoratableLocation), "IsFloorableOrWallpaperableTile"),
-               prefix: new HarmonyMethod(typeof(LocationPatches), nameof(LocationPatches.DecoratableLocation_IsFloorableOrWallpaperableTile_Prefix))
+               prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.DecoratableLocation_IsFloorableOrWallpaperableTile_Prefix))
             );
-            */
+            
 
             // NetWorldState patch 
 
@@ -91,6 +92,7 @@ namespace PolyamorySweetRooms
             SHelper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             SHelper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
             SHelper.Events.Content.AssetRequested += Content_AssetRequested;
+            SHelper.Events.Player.Warped += OnWarped;
         }
 
         private void Content_AssetRequested(object sender, StardewModdingAPI.Events.AssetRequestedEventArgs e)
@@ -109,9 +111,12 @@ namespace PolyamorySweetRooms
         {
             currentRoomData.Clear();
         }
+        public static IPolyamorySweetLoveAPI polyamorySweetLoveAPI;
 
         private void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
+            polyamorySweetLoveAPI = SHelper.ModRegistry.GetApi<IPolyamorySweetLoveAPI>("ApryllForever.PolyamorySweetLove");
+
 
             foreach (IContentPack contentPack in SHelper.ContentPacks.GetOwned())
             {
@@ -145,6 +150,61 @@ namespace PolyamorySweetRooms
                     SMonitor.Log($"Error adding {srd.name} room data, template {srd.templateName} start pos {srd.startPos}: \n\n{ex}", LogLevel.Error);
                 }
             }
+        }
+
+        public static void ResetRooms(Farmer who, FarmHouse farmHouse, HashSet<string> ____appliedMapOverrides)
+        {
+
+            var dict = SHelper.GameContent.Load<Dictionary<string, SpouseRoomData>>(dictPath);
+            foreach (var srd in dict.Values)
+            {
+                try
+                {
+                    customRoomData.Add(srd.name, srd);
+                    SMonitor.Log($"Added {srd.name} room data, template {srd.templateName} start pos {srd.startPos}");
+                }
+                catch (Exception ex)
+                {
+                    SMonitor.Log($"Error adding {srd.name} room data, template {srd.templateName} start pos {srd.startPos}: \n\n{ex}", LogLevel.Error);
+                }
+
+
+
+                FarmHouse_loadSpouseRoom_Prefix(farmHouse, ____appliedMapOverrides);
+
+
+               // MakeSpouseRoom(farmHouse, , srd);
+            }
+
+           
+
+
+
+
+
+
+
+        }
+
+        public void OnWarped(object sender, WarpedEventArgs e)
+        { 
+        if(Game1.player.isEngaged())
+            {
+                if(e.NewLocation.Name.Equals("FarmHouse") )
+                {
+
+                    FarmHouse fh = Utility.getHomeOfFarmer(Game1.player);
+                    MakeSpouseRoom(fh,null,null);
+                    fh.loadSpouseRoom();
+                    fh.showSpouseRoom();
+
+                  
+
+                }
+
+
+            }
+        
         }
 
         public override object GetApi()
