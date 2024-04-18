@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using xTile;
 using StardewModdingAPI.Events;
+using PolyamorySweetLove;
 
 namespace PolyamorySweetRooms
 {
@@ -92,14 +93,24 @@ namespace PolyamorySweetRooms
             SHelper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             SHelper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
             SHelper.Events.Content.AssetRequested += Content_AssetRequested;
-            SHelper.Events.Player.Warped += OnWarped;
+            SHelper.Events.GameLoop.ReturnedToTitle += GameLoop_ReturnedToTitle;
+            
         }
+
+        public static bool justLoadedSave = true;
+        private void GameLoop_ReturnedToTitle(object sender, StardewModdingAPI.Events.ReturnedToTitleEventArgs e)
+        {
+            justLoadedSave = true;
+        }
+
+
+
 
         private void Content_AssetRequested(object sender, StardewModdingAPI.Events.AssetRequestedEventArgs e)
         {
             if (!Config.EnableMod)
                 return;
-            if(e.NameWithoutLocale.BaseName.Contains("custom_spouse_room_"))
+            if (e.NameWithoutLocale.BaseName.Contains("custom_spouse_room_"))
                 e.LoadFromModFile<Map>(e.NameWithoutLocale.BaseName + ".tmx", StardewModdingAPI.Events.AssetLoadPriority.Exclusive);
             else if (e.NameWithoutLocale.IsEquivalentTo(dictPath))
             {
@@ -113,11 +124,14 @@ namespace PolyamorySweetRooms
         }
         public static IPolyamorySweetLoveAPI polyamorySweetLoveAPI;
 
+
         private void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
-            polyamorySweetLoveAPI = SHelper.ModRegistry.GetApi<IPolyamorySweetLoveAPI>("ApryllForever.PolyamorySweetLove");
-
-
+            /*
+             * 
+             * Lets' see where the hell turning this off goes. It's making bugs. Content packs are no longer used. 
+             * 
+             * 
             foreach (IContentPack contentPack in SHelper.ContentPacks.GetOwned())
             {
                 SMonitor.Log($"Reading content pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} from {contentPack.DirectoryPath}");
@@ -129,14 +143,14 @@ namespace PolyamorySweetRooms
                         customRoomData.Add(srd.name, srd);
                         SMonitor.Log($"Added {srd.name} room data, template {srd.templateName} start pos {srd.startPos}");
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         SMonitor.Log($"Error adding {srd.name} room data, template {srd.templateName} start pos {srd.startPos}: \n\n{ex}", LogLevel.Error);
                     }
                 }
 
                 SMonitor.Log($"Added {obj.data.Count} room datas from {contentPack.Manifest.Name}");
-            }
+            }*/
             var dict = SHelper.GameContent.Load<Dictionary<string, SpouseRoomData>>(dictPath);
             foreach (var srd in dict.Values)
             {
@@ -150,6 +164,31 @@ namespace PolyamorySweetRooms
                     SMonitor.Log($"Error adding {srd.name} room data, template {srd.templateName} start pos {srd.startPos}: \n\n{ex}", LogLevel.Error);
                 }
             }
+
+            var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+            if (configMenu is null)
+                return;
+
+            configMenu.Register(
+               mod: ModManifest,
+               reset: () => Config = new ModConfig(),
+               save: () => Helper.WriteConfig(Config)
+           );
+            configMenu.AddBoolOption(
+               mod: ModManifest,
+               name: () => "Mod Enabled?",
+               getValue: () => Config.EnableMod,
+               setValue: value => Config.EnableMod = value
+           );
+
+            configMenu.AddBoolOption(
+              mod: ModManifest,
+              name: () => "Decorate Halls Individually?",
+              getValue: () => Config.DecorateHallsIndividually,
+              setValue: value => Config.DecorateHallsIndividually = value
+          );
+
+
         }
 
         public static void ResetRooms(Farmer who, FarmHouse farmHouse, HashSet<string> ____appliedMapOverrides)
@@ -168,43 +207,11 @@ namespace PolyamorySweetRooms
                     SMonitor.Log($"Error adding {srd.name} room data, template {srd.templateName} start pos {srd.startPos}: \n\n{ex}", LogLevel.Error);
                 }
 
-
-
                 FarmHouse_loadSpouseRoom_Prefix(farmHouse, ____appliedMapOverrides);
 
-
-               // MakeSpouseRoom(farmHouse, , srd);
-            }
-
-           
-
-
-
-
-
-
-
-        }
-
-        public void OnWarped(object sender, WarpedEventArgs e)
-        { 
-        if(Game1.player.isEngaged())
-            {
-                if(e.NewLocation.Name.Equals("FarmHouse") )
-                {
-
-                    FarmHouse fh = Utility.getHomeOfFarmer(Game1.player);
-                    MakeSpouseRoom(fh,null,null);
-                    fh.loadSpouseRoom();
-                    fh.showSpouseRoom();
-
-                  
-
-                }
-
-
-            }
         
+            }
+
         }
 
         public override object GetApi()

@@ -3,7 +3,7 @@ using StardewValley;
 
 namespace PolyamorySweetRooms
 {
-    public interface ICustomSpouseRoomsAPI
+    public interface IPolyamorySweetRoomsAPI
     {
         public Point GetSpouseTileOffset(NPC spouse);
         public Point GetSpouseTile(NPC spouse);

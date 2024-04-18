@@ -5,6 +5,6 @@ namespace PolyamorySweetRooms
     {
         public bool EnableMod { get; set; } = true;
         public string SpouseRoomOrder { get; set; } = "";
-        public bool DecorateHallsIndividually { get; set; } = false;
+        public bool DecorateHallsIndividually { get; set; } = true;
     }
 }
