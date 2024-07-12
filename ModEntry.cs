@@ -127,11 +127,7 @@ namespace PolyamorySweetRooms
 
         private void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
-            /*
-             * 
-             * Lets' see where the hell turning this off goes. It's making bugs. Content packs are no longer used. 
-             * 
-             * 
+
             foreach (IContentPack contentPack in SHelper.ContentPacks.GetOwned())
             {
                 SMonitor.Log($"Reading content pack: {contentPack.Manifest.Name} {contentPack.Manifest.Version} from {contentPack.DirectoryPath}");
@@ -150,7 +146,7 @@ namespace PolyamorySweetRooms
                 }
 
                 SMonitor.Log($"Added {obj.data.Count} room datas from {contentPack.Manifest.Name}");
-            }*/
+            }
             var dict = SHelper.GameContent.Load<Dictionary<string, SpouseRoomData>>(dictPath);
             foreach (var srd in dict.Values)
             {

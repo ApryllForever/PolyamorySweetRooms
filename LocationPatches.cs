@@ -1,26 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
+using StardewValley.GameData.Characters;
 using StardewValley.Locations;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using xTile;
 using xTile.Dimensions;
 using xTile.Layers;
 using xTile.Tiles;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
-using StardewValley.GameData.Characters;
 
 namespace PolyamorySweetRooms
 {
-
-
-
-   
-        public partial class ModEntry
+    public partial class ModEntry
         {
 
             public static void FarmHouse_checkAction_Postfix(FarmHouse __instance, Location tileLocation)
@@ -133,9 +125,17 @@ namespace PolyamorySweetRooms
                     string spouse = orderedSpouses[i];
 
                     SpouseRoomData srd = null;
+
                     if (customRoomData.TryGetValue(spouse, out SpouseRoomData srd1))
                     {
-                        srd = new SpouseRoomData(srd1);
+                        try
+                        {
+                            srd = new SpouseRoomData(srd1);
+                        }
+                        catch (NullReferenceException nre)
+                        {
+                            SMonitor.Log($"Failed to find spouse room data for {spouse}:\n{nre}", LogLevel.Error);
+                        }
                     }
 
                     Point corner = __instance.GetSpouseRoomCorner() + new Point(xOffset * i, 0);
@@ -321,6 +321,21 @@ namespace PolyamorySweetRooms
 
                 Dictionary<string, CharacterData> characterData = SHelper.GameContent.Load<Dictionary<string, CharacterData>>("Data\\Characters");
                 CharacterData spouseData = characterData[spouse];
+                if (spouseData == null)
+                {
+                    SMonitor.Log(level: LogLevel.Error, message: "Failed to load Room Data for " + spouse+ "; please make sure that NPC has spouse room data, or contact the maker of that NPC. If this NPC is not normally marriable, there will be no custom room.");
+                    return;
+                }
+
+               if( spouseData.SpouseRoom == null)
+                {
+                    SMonitor.Log(level: LogLevel.Error, message: "Failed to load Room for " + spouse +"; please ensure that the NPC has a spouse room created, or contact the one who made that NPC. If this NPC is not normally marriable, there will be no custom room.");
+                    return;
+
+                }
+
+
+
                 string map_path = spouseData.SpouseRoom.MapAsset;
                 if (map_path == "" || map_path == null)
                 {

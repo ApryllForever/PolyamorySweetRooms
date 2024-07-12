@@ -29,9 +29,9 @@ namespace PolyamorySweetRooms
         private static Dictionary<string, int> topOfHeadOffsets = new Dictionary<string, int>();
 
         public static Dictionary<string, object> GetSpouses(Farmer farmer, int all)
-        {
-            farmer = GetOwner(Game1.currentLocation);
-/*
+        {   
+            //farmer = GetOwner(Game1.currentLocation);
+            
             if (farmer == null )
             {
                 if (Game1.IsMasterGame)
@@ -48,11 +48,11 @@ namespace PolyamorySweetRooms
                 }
 
             }
-*/
+
 
             Dictionary<string, object> spouses = new Dictionary<string, object>();
 
-
+            
             if (all < 0)
             {
                 
@@ -65,7 +65,7 @@ namespace PolyamorySweetRooms
                     }
                 }
                
-                }
+            }
                 foreach (string friend in farmer.friendshipData.Keys)
             {
                 if (Game1.getCharacterFromName(friend, true) != null && farmer.friendshipData[friend].IsMarried() && (all > 0 || friend != farmer.spouse))
