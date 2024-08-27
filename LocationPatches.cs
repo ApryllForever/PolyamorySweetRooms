@@ -87,6 +87,8 @@ namespace PolyamorySweetRooms
                 }
 
                 ModEntry.justLoadedSave = false;
+
+            Dictionary<Farmer, string[]>? farmerSpouseDictionary = new();
             try
             {
                 SMonitor.Log("Loading spouse rooms, clearing current room data");
@@ -102,6 +104,70 @@ namespace PolyamorySweetRooms
                 }
 
                 GetFarmHouseSpouseRooms(__instance, allSpouses, out List<string> orderedSpouses, out List<string> customSpouses);
+               /* SpouseRoomData roomData = new SpouseRoomData();
+
+
+                List<string> orderedSpouses = new();
+                List<string> customSpouses = new();
+
+                List<string> listowives = new List<string>();
+                string[] obj;
+                foreach (Farmer farmer in Game1.getAllFarmers())
+                {
+                    farmer.haslistWives().Clear();
+                    List<string> orderableSpouses = new();
+
+                    foreach (var npc in farmer.friendshipData.Keys)
+                    {
+                        if (farmer.friendshipData[npc].IsMarried())
+                        {
+                            farmer.haslistWives().Add(npc);
+                        }
+
+
+                        farmerSpouseDictionary.Add(farmer, [npc]);
+
+                        if (farmerSpouseDictionary.TryGetValue(farmer, out obj))
+                        {
+                            listowives.AddRange(obj);
+                            orderableSpouses.AddRange(obj);
+                        }
+
+
+                     
+                    }
+   
+                   
+
+                    for (int i = orderableSpouses.Count - 1; i >= 0; i--)
+                    {
+                        if (customRoomData.TryGetValue(orderableSpouses[i], out SpouseRoomData srd) && !srd.islandFarmHouse && (srd.upgradeLevel == __instance.upgradeLevel || srd.upgradeLevel < 0) && srd.startPos.X > -1)
+                        {
+                            SMonitor.Log($"{orderableSpouses[i]} has custom spouse room");
+                            customSpouses.Add(orderableSpouses[i]);
+                            orderableSpouses.RemoveAt(i);
+
+
+
+                        }
+                    }
+                    orderedSpouses = orderableSpouses;
+
+                }  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 __instance.reloadMap();
 
@@ -128,14 +194,11 @@ namespace PolyamorySweetRooms
 
                     if (customRoomData.TryGetValue(spouse, out SpouseRoomData srd1))
                     {
-                        try
+                        if(srd1 !=null)
                         {
                             srd = new SpouseRoomData(srd1);
                         }
-                        catch (NullReferenceException nre)
-                        {
-                            SMonitor.Log($"Failed to find spouse room data for {spouse}:\n{nre}", LogLevel.Error);
-                        }
+                       
                     }
 
                     Point corner = __instance.GetSpouseRoomCorner() + new Point(xOffset * i, 0);

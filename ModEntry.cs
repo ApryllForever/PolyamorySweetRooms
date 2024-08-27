@@ -8,7 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using xTile;
 using StardewModdingAPI.Events;
-using PolyamorySweetLove;
+using SpaceShared.APIs;
+using System.Reflection.Emit;
+using System.Reflection;
+using StardewValley.GameData.Characters;
+using StardewValley.Objects;
+using Netcode;
+using Microsoft.Xna.Framework;
+
 
 namespace PolyamorySweetRooms
 {
@@ -90,6 +97,14 @@ namespace PolyamorySweetRooms
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.hasWorldStateID_Prefix))
             );
 
+            //harmony.Patch(
+              //  original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.showSpouseRoom)),
+                //transpiler: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.explode_Transpiler)));
+
+            harmony.Patch(
+               original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.showSpouseRoom)),
+               prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.showSpouseRoom_Prefix)));
+
             SHelper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             SHelper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
             SHelper.Events.Content.AssetRequested += Content_AssetRequested;
@@ -127,6 +142,11 @@ namespace PolyamorySweetRooms
 
         private void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
         {
+            var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
+
+            sc.RegisterCustomProperty(typeof(Farmer), "listWives", typeof(HashSet<string>), AccessTools.Method(typeof(Farmer_listWives), nameof(Farmer_listWives.haslistWives)), AccessTools.Method(typeof(Farmer_listWives), nameof(Farmer_listWives.set_haslistWives)));
+
+
 
             foreach (IContentPack contentPack in SHelper.ContentPacks.GetOwned())
             {
@@ -214,6 +234,207 @@ namespace PolyamorySweetRooms
         {
             return new SweetRoomsAPI();
         }
+        /*
+        public static IEnumerable<CodeInstruction> explode_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            var newCodes = new List<CodeInstruction>();
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode == OpCodes.Stfld && ((FieldInfo)codes[i].operand).Name == "StardewValley.Locations.FarmHouse::lastSpouseRoom") // if at the part of code that sets alphaFade...
+                {
+                    newCodes.Remove(codes[i]); // ...intercept before setting and use custom formula
+                }
+                newCodes.Add(codes[i]);
+            }
+            return newCodes.AsEnumerable();
+        } */
+
+        private static bool showSpouseRoom_Prefix(FarmHouse __instance)
+        {
+            if (!Config.EnableMod )
+                return true;
+
+            bool displayingspouseroom = SHelper.Reflection.GetField<bool>(__instance, "displayingSpouseRoom").GetValue();
+
+            {
+                var allSpouses = GetSpouses(__instance.owner, -1).Keys.ToList();
+                if (allSpouses.Count == 0)
+                    return true;
+
+                if ( allSpouses.Count == 1)// single spouse, no customizations
+                {
+                    SMonitor.Log("Single uncustomized spouse room, letting vanilla game take over");
+                    return true;
+                }
+
+
+
+
+                bool showSpouse;
+                showSpouse = __instance.HasNpcSpouseOrRoommate();
+                bool num;
+                num = displayingspouseroom;
+                displayingspouseroom = showSpouse;
+                __instance.updateMap();
+
+
+                List<string> listowives = new List<string>();
+
+
+                    __instance.owner.haslistWives().Clear();
+
+                    foreach (var npc in __instance.owner.friendshipData.Keys)
+                    {
+                        if (__instance.owner.friendshipData[npc].IsMarried())
+                        {
+                        __instance.owner.haslistWives().Add(npc);
+                        listowives.Add(npc);
+                        }
+
+
+                    }
+
+                    
+
+
+
+
+                    foreach ( string wives in listowives )
+                {
+
+                 //   if (num && !displayingspouseroom)
+                    {
+                        Point corner;
+                        corner = __instance.GetSpouseRoomCorner();
+                        Microsoft.Xna.Framework.Rectangle sourceArea;
+                        sourceArea = CharacterSpouseRoomData.DefaultMapSourceRect;
+                        if (NPC.TryGetData(__instance.owner.spouse, out var spouseData)) //Angel THISSSSSSSSSSS
+                        {
+                            sourceArea = spouseData.SpouseRoom?.MapSourceRect ?? sourceArea;
+                        }
+                        Microsoft.Xna.Framework.Rectangle spouseRoomBounds;
+                        spouseRoomBounds = new Microsoft.Xna.Framework.Rectangle(corner.X, corner.Y, sourceArea.Width, sourceArea.Height);
+                        spouseRoomBounds.X--;
+                        List<Item> collected_items;
+                        collected_items = new List<Item>();
+                        Microsoft.Xna.Framework.Rectangle room_bounds;
+                        room_bounds = new Microsoft.Xna.Framework.Rectangle(spouseRoomBounds.X * 64, spouseRoomBounds.Y * 64, spouseRoomBounds.Width * 64, spouseRoomBounds.Height * 64);
+                        foreach (Furniture placed_furniture in new List<Furniture>(__instance.furniture))
+                        {
+                            if (placed_furniture.GetBoundingBox().Intersects(room_bounds))
+                            {
+                                if (placed_furniture is StorageFurniture storage_furniture)
+                                {
+                                    collected_items.AddRange(storage_furniture.heldItems);
+                                    storage_furniture.heldItems.Clear();
+                                }
+                                if (placed_furniture.heldObject.Value != null)
+                                {
+                                    collected_items.Add(placed_furniture.heldObject.Value);
+                                    placed_furniture.heldObject.Value = null;
+                                }
+                                collected_items.Add(placed_furniture);
+                                __instance.furniture.Remove(placed_furniture);
+                            }
+                        }
+                        for (int x = spouseRoomBounds.X; x <= spouseRoomBounds.Right; x++)
+                        {
+                            for (int y = spouseRoomBounds.Y; y <= spouseRoomBounds.Bottom; y++)
+                            {
+                                StardewValley.Object tile_object;
+                                tile_object = __instance.getObjectAtTile(x, y);
+                                if (tile_object == null || tile_object is Furniture)
+                                {
+                                    continue;
+                                }
+                                tile_object.performRemoveAction();
+                                if (!(tile_object is Fence fence))
+                                {
+                                    if (!(tile_object is IndoorPot garden_pot))
+                                    {
+                                        if (tile_object is Chest chest)
+                                        {
+                                            collected_items.AddRange(chest.Items);
+                                            chest.Items.Clear();
+                                        }
+                                    }
+                                    else if (garden_pot.hoeDirt.Value?.crop != null)
+                                    {
+                                        garden_pot.hoeDirt.Value.destroyCrop(showAnimation: false);
+                                    }
+                                }
+                                else
+                                {
+                                    tile_object = new StardewValley.Object(fence.ItemId, 1);
+                                }
+                                tile_object.heldObject.Value = null;
+                                tile_object.minutesUntilReady.Value = -1;
+                                tile_object.readyForHarvest.Value = false;
+                                collected_items.Add(tile_object);
+                                __instance.objects.Remove(new Vector2(x, y));
+                            }
+                        }
+                        if (__instance.upgradeLevel >= 2)
+                        {
+                            Utility.createOverflowChest(__instance, new Vector2(39f, 32f), collected_items);
+                        }
+                        else
+                        {
+                            Utility.createOverflowChest(__instance, new Vector2(21f, 10f), collected_items);
+                        }
+                    }
+
+                }
+                __instance.loadObjects();
+                if (__instance.upgradeLevel == 3)
+                {
+                    __instance.AddCellarTiles();
+                    __instance.createCellarWarps();
+                    Game1.player.craftingRecipes.TryAdd("Cask", 0);
+                }
+
+
+
+
+                if (showSpouse)
+                {
+                    __instance.loadSpouseRoom();
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                return false;
+
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+            return true;
+        }
+
 
 
     }

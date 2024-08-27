@@ -29,59 +29,71 @@ namespace PolyamorySweetRooms
         private static Dictionary<string, int> topOfHeadOffsets = new Dictionary<string, int>();
 
         public static Dictionary<string, object> GetSpouses(Farmer farmer, int all)
-        {   
-            //farmer = GetOwner(Game1.currentLocation);
-            
-            if (farmer == null )
-            {
-                if (Game1.IsMasterGame)
-                {
-                    farmer = Game1.player;
-                }
-                else
-                {
-                    foreach(Farmer farmur in Game1.getAllFarmers() )
-                    {
-                         farmer = Game1.player;
-
-                    }
-                }
-
-            }
-
-
+        {
             Dictionary<string, object> spouses = new Dictionary<string, object>();
-
-            
-            if (all < 0)
+            if (farmer != null)
             {
-                
-                {
-                    NPC ospouse = farmer.getSpouse();
+                /*
+                //farmer = GetOwner(Game1.currentLocation);
 
-                    if (ospouse != null)
+                if (farmer == null && Game1.currentLocation is FarmHouse)
+                {
+                    farmer = GetOwner(Game1.currentLocation);
+                    /*
+                    if (Game1.IsMasterGame)
                     {
-                        spouses[ospouse.Name] = ospouse;
+                        farmer = Game1.player;
+                    }
+                    else
+                    {
+                        foreach(Farmer farmur in Game1.getAllFarmers() )
+                        {
+                             farmer = Game1.player;
+
+                        }
+                    }
+
+                }
+
+                if ( Game1.currentLocation is FarmHouse)
+                {
+                    farmer = GetOwner(Game1.currentLocation);
+
+                } */
+
+
+
+
+                if (all < 0)
+                {
+
+                    {
+                        NPC ospouse = farmer.getSpouse();
+
+                        if (ospouse != null)
+                        {
+                            spouses[ospouse.Name] = ospouse;
+                        }
+                    }
+
+                }
+                foreach (string friend in farmer.friendshipData.Keys)
+                {
+                    if (Game1.getCharacterFromName(friend, true) != null && farmer.friendshipData[friend].IsMarried() && (all > 0 || friend != farmer.spouse))
+                    {
+                        spouses[friend] = Game1.getCharacterFromName(friend, true);
                     }
                 }
-               
-            }
-                foreach (string friend in farmer.friendshipData.Keys)
-            {
-                if (Game1.getCharacterFromName(friend, true) != null && farmer.friendshipData[friend].IsMarried() && (all > 0 || friend != farmer.spouse))
+                foreach (var pair in farmer.team.friendshipData.Pairs)
                 {
-                    spouses[friend] = Game1.getCharacterFromName(friend, true);
-                }
-            }
-            foreach (var pair in farmer.team.friendshipData.Pairs)
-            {
-                if (!pair.Value.IsMarried())
-                    continue;
-                long id = pair.Key.Farmer1 == farmer.UniqueMultiplayerID ? pair.Key.Farmer2 : pair.Key.Farmer1;
-                Farmer spouse = Game1.getFarmer(id);
-                if (spouse != null)
-                {
-                    spouses[spouse.Name] = spouse;
+                    if (!pair.Value.IsMarried())
+                        continue;
+                    long id = pair.Key.Farmer1 == farmer.UniqueMultiplayerID ? pair.Key.Farmer2 : pair.Key.Farmer1;
+                    Farmer spouse = Game1.getFarmer(id);
+                    if (spouse != null)
+                    {
+                        spouses[spouse.Name] = spouse;
+                    }
                 }
             }
             return spouses;
