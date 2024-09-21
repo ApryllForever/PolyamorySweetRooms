@@ -15,6 +15,8 @@ using StardewValley.GameData.Characters;
 using StardewValley.Objects;
 using Netcode;
 using Microsoft.Xna.Framework;
+using StardewModdingAPI.Utilities;
+using StardewModdingAPI.Enums;
 
 
 namespace PolyamorySweetRooms
@@ -26,8 +28,11 @@ namespace PolyamorySweetRooms
         public static IMonitor SMonitor;
         public static IModHelper SHelper;
         public static ModConfig Config;
+        int Goat = 0;
         
         public static string dictPath = "ApryllForever.PolyamorySweetRooms/dict";
+
+        public static List<string> JustEngagedList = new();
 
         public static Dictionary<string, int> roomIndexes = new Dictionary<string, int>{
             { "Abigail", 0 },
@@ -75,10 +80,13 @@ namespace PolyamorySweetRooms
                original: AccessTools.Method(typeof(FarmHouse), nameof(FarmHouse.loadSpouseRoom)),
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.FarmHouse_loadSpouseRoom_Prefix))
             );
-            harmony.Patch(
-               original: AccessTools.Method(typeof(FarmHouse), nameof(FarmHouse.updateFarmLayout)),
-               prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.FarmHouse_updateFarmLayout_Prefix))
-            );
+           // harmony.Patch(
+
+            //orig purpose of this patch was to bypass showspouseroom, it seems. I am using show spouse room. Let's murder this patch.
+
+           //    original: AccessTools.Method(typeof(FarmHouse), nameof(FarmHouse.updateFarmLayout)),
+           //    prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.FarmHouse_updateFarmLayout_Prefix))
+           // );
             harmony.Patch(
                original: AccessTools.Method(typeof(DecoratableLocation), nameof(DecoratableLocation.MakeMapModifications)),
                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.DecoratableLocation_MakeMapModifications_Postfix))
@@ -97,25 +105,109 @@ namespace PolyamorySweetRooms
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.hasWorldStateID_Prefix))
             );
 
-            //harmony.Patch(
-              //  original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.showSpouseRoom)),
-                //transpiler: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.explode_Transpiler)));
+            harmony.Patch(
+              original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.showSpouseRoom)),
+            transpiler: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.explode1_Transpiler)));
+
+
+            harmony.Patch(
+              original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.updateFarmLayout)),
+            transpiler: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.explode_Transpiler)));
 
             harmony.Patch(
                original: AccessTools.DeclaredMethod(typeof(FarmHouse), nameof(FarmHouse.showSpouseRoom)),
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.showSpouseRoom_Prefix)));
 
+            harmony.Patch(
+              original: AccessTools.DeclaredMethod(typeof(NPC), "engagementResponse"),
+              postfix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.NPC_engagementResponse_Postfix))
+           );
+
+
             SHelper.Events.GameLoop.GameLaunched += GameLoop_GameLaunched;
             SHelper.Events.GameLoop.SaveLoaded += GameLoop_SaveLoaded;
             SHelper.Events.Content.AssetRequested += Content_AssetRequested;
             SHelper.Events.GameLoop.ReturnedToTitle += GameLoop_ReturnedToTitle;
+            SHelper.Events.GameLoop.DayStarted += OnDayStarted;
+            SHelper.Events.Specialized.LoadStageChanged += OnLoadStateChanged;
             
         }
 
+        private static void NPC_engagementResponse_Postfix(NPC __instance, Farmer who, bool asRoommate = false)
+        {
+            JustEngagedList.Add(__instance.Name);
+
+
+
+        }
+
+
+
+
+
+        private static void OnLoadStateChanged(object sender, LoadStageChangedEventArgs e)
+        {
+            /*
+            if(e.NewStage == LoadStage.SaveAddedLocations)
+            {
+                foreach (Farmer farmer in Game1.getAllFarmers())
+                {
+                    foreach (var npc in farmer.friendshipData.Keys.ToList())
+                    {
+                        NPC fubar = Game1.getCharacterFromName(npc);
+
+                        if (fubar != null && fubar.justEngaged().Value == true)
+                        {
+                            fubar.justEngaged().Value = false;
+
+                        }
+
+                    }
+                }
+
+
+
+            } */
+        }
+
+
+
         public static bool justLoadedSave = true;
+
+
         private void GameLoop_ReturnedToTitle(object sender, StardewModdingAPI.Events.ReturnedToTitleEventArgs e)
         {
             justLoadedSave = true;
+
+            JustEngagedList.Clear();
+
+
+            /*
+          foreach (Farmer farmer in Game1.getAllFarmers())
+          {
+              foreach (var npc in farmer.friendshipData.Keys.ToList())
+              {
+                  NPC fubar = Game1.getCharacterFromName(npc);
+
+                  if(fubar != null && fubar.justEngaged().Value == true) 
+                  { 
+                  fubar.justEngaged().Value = false;
+
+                  }
+
+              }
+          }*/
+
+
+
+
+
+
+
+
+
+
+
         }
 
 
@@ -136,8 +228,30 @@ namespace PolyamorySweetRooms
         private void GameLoop_SaveLoaded(object sender, StardewModdingAPI.Events.SaveLoadedEventArgs e)
         {
             currentRoomData.Clear();
+            /*
+            foreach (Farmer farmer in Game1.getAllFarmers())
+            {
+                foreach (var npc in farmer.friendshipData.Keys)
+                {
+                    NPC fubar = Game1.getCharacterFromName(npc);
+
+                    if(fubar != null && fubar.justEngaged().Value == true) 
+                    { 
+                    fubar.justEngaged().Value = false;
+                    
+                    }
+
+                }
+            }*/
+
+
+
+                }
+
+        private void OnDayStarted(object sender, DayStartedEventArgs e)
+        {
+           
         }
-        public static IPolyamorySweetLoveAPI polyamorySweetLoveAPI;
 
 
         private void GameLoop_GameLaunched(object sender, StardewModdingAPI.Events.GameLaunchedEventArgs e)
@@ -234,7 +348,22 @@ namespace PolyamorySweetRooms
         {
             return new SweetRoomsAPI();
         }
-        /*
+        
+        public static IEnumerable<CodeInstruction> explode1_Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var codes = new List<CodeInstruction>(instructions);
+            var newCodes = new List<CodeInstruction>();
+            for (int i = 0; i < codes.Count; i++)
+            {
+                if (codes[i].opcode == OpCodes.Stfld && ((FieldInfo)codes[i].operand).Name == "StardewValley.Locations.FarmHouse::lastSpouseRoom") // if at the part of code that sets alphaFade...
+                {
+                    newCodes.Remove(codes[i]); // ...intercept before setting and use custom formula
+                }
+                newCodes.Add(codes[i]);
+            }
+            return newCodes.AsEnumerable();
+        } 
+
         public static IEnumerable<CodeInstruction> explode_Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var codes = new List<CodeInstruction>(instructions);
@@ -248,16 +377,22 @@ namespace PolyamorySweetRooms
                 newCodes.Add(codes[i]);
             }
             return newCodes.AsEnumerable();
-        } */
+        }
+
+
+
+
 
         private static bool showSpouseRoom_Prefix(FarmHouse __instance)
         {
             if (!Config.EnableMod )
                 return true;
 
+          
+
             bool displayingspouseroom = SHelper.Reflection.GetField<bool>(__instance, "displayingSpouseRoom").GetValue();
 
-            {
+            
                 var allSpouses = GetSpouses(__instance.owner, -1).Keys.ToList();
                 if (allSpouses.Count == 0)
                     return true;
@@ -269,7 +404,9 @@ namespace PolyamorySweetRooms
                 }
 
 
-
+                if (allSpouses.Count >= 2)
+            {
+                HashSet<string> ____appliedMapOverrides = new();
 
                 bool showSpouse;
                 showSpouse = __instance.HasNpcSpouseOrRoommate();
@@ -398,21 +535,15 @@ namespace PolyamorySweetRooms
 
 
                 if (showSpouse)
+
                 {
-                    __instance.loadSpouseRoom();
+                    //foreach (Farmer farmer in Game1.getAllFarmers())
+                    {
+                        // __instance.loadSpouseRoom();
+
+                        FarmHouse_loadSpouseRoom_Prefix(__instance, ____appliedMapOverrides);
+                    }
                 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -420,14 +551,6 @@ namespace PolyamorySweetRooms
                 return false;
 
             }
-
-
-
-
-
-
-
-
 
 
 

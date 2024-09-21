@@ -81,30 +81,72 @@ namespace PolyamorySweetRooms
                 if (!Config.EnableMod)
                     return true;
 
-                if (!ModEntry.justLoadedSave)
-                {
-                    return false;
-                }
-
-                ModEntry.justLoadedSave = false;
-
-            Dictionary<Farmer, string[]>? farmerSpouseDictionary = new();
+           // Dictionary<Farmer, string[]>? farmerSpouseDictionary = new();
             try
             {
                 SMonitor.Log("Loading spouse rooms, clearing current room data");
                 currentRoomData.Clear();
+
+              //  var allthemtharspouses = GetSpouses(__instance.owner, -1).Keys.ToList();
+
+               // var allSpises = allthemtharspouses;
+
+              //  foreach (var wife in allthemtharspouses.ToList())
+              //  {
+                //    NPC fubar = Game1.getCharacterFromName(wife);
+                 //   if (fubar.justEngaged().Value == true)
+                  //  {
+                    //    string biteme = fubar.Name;
+                   //     allSpises.Remove(biteme);
+                   // }
+               // }
+
+
+
+               // var allSpouses = allSpises;
+
                 var allSpouses = GetSpouses(__instance.owner, -1).Keys.ToList();
+
+                foreach(var wife in  allSpouses.ToList()) 
+                { 
+                if (JustEngagedList.Contains(wife))
+                    {
+
+                        allSpouses.Remove(wife);
+                    }
+                
+                
+                
+                }
+
+                foreach(Farmer farmer in Game1.getAllFarmers())
+                {
+                    if(farmer != null && allSpouses.Contains(farmer.Name))
+                    {
+                        allSpouses.Remove(farmer.Name);
+
+                    }
+
+
+
+                }
+
+
                 if (allSpouses.Count == 0)
                     return true;
 
-                if (ModEntry.customRoomData.Count == 0 && allSpouses.Count == 1)// single spouse, no customizations
-                {
-                    SMonitor.Log("Single uncustomized spouse room, letting vanilla game take over");
-                    return true;
-                }
 
-                GetFarmHouseSpouseRooms(__instance, allSpouses, out List<string> orderedSpouses, out List<string> customSpouses);
-               /* SpouseRoomData roomData = new SpouseRoomData();
+                //Lined this out trying to make the engaged crash stop
+                //
+             //   if (ModEntry.customRoomData.Count == 0 && allSpouses.Count == 1)// single spouse, no customizations
+             //   {
+             //       SMonitor.Log("Single uncustomized spouse room, letting vanilla game take over");
+             //       return true;
+              //  }
+
+               GetFarmHouseSpouseRooms(__instance, allSpouses, out List<string> orderedSpouses, out List<string> customSpouses);
+             
+                /*SpouseRoomData roomData = new SpouseRoomData();
 
 
                 List<string> orderedSpouses = new();
@@ -131,13 +173,8 @@ namespace PolyamorySweetRooms
                         {
                             listowives.AddRange(obj);
                             orderableSpouses.AddRange(obj);
-                        }
-
-
-                     
+                        }                     
                     }
-   
-                   
 
                     for (int i = orderableSpouses.Count - 1; i >= 0; i--)
                     {
@@ -146,25 +183,11 @@ namespace PolyamorySweetRooms
                             SMonitor.Log($"{orderableSpouses[i]} has custom spouse room");
                             customSpouses.Add(orderableSpouses[i]);
                             orderableSpouses.RemoveAt(i);
-
-
-
                         }
                     }
                     orderedSpouses = orderableSpouses;
 
                 }  */
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -351,137 +374,146 @@ namespace PolyamorySweetRooms
         {
             try
             {
-                SMonitor.Log($"Loading spouse room for {srd.name}. template {srd.templateName}, index {srd.templateIndex}, shellStart {srd.startPos}, spouse offset {srd.spousePosOffset}. Type: {srd.shellType}");
-
-                var corner = srd.startPos + new Point(1, 1);
-                var spouse = srd.name;
-                var shellPath = srd.shellType;
-                var indexInSpouseMapSheet = srd.templateIndex;
-                var spouseSpot = srd.startPos + srd.spousePosOffset;
-
-                Rectangle shellAreaToRefurbish = new Rectangle(corner.X - 1, corner.Y - 1, 8, 12);
-                ExtendMap(location, shellAreaToRefurbish.X + shellAreaToRefurbish.Width, shellAreaToRefurbish.Y + shellAreaToRefurbish.Height);
-
-                // load shell
-
-                if (appliedMapOverrides.Contains("spouse_room_" + spouse + "_shell"))
+                if (srd != null)
                 {
-                    appliedMapOverrides.Remove("spouse_room_" + spouse + "_shell");
-                }
 
-                location.ApplyMapOverride(shellPath, "spouse_room_" + spouse + "_shell", new Rectangle?(new Rectangle(0, 0, shellAreaToRefurbish.Width, shellAreaToRefurbish.Height)), new Rectangle?(shellAreaToRefurbish));
+                    SMonitor.Log($"Loading spouse room for {srd.name}. template {srd.templateName}, index {srd.templateIndex}, shellStart {srd.startPos}, spouse offset {srd.spousePosOffset}. Type: {srd.shellType}");
 
-                for (int x = 0; x < shellAreaToRefurbish.Width; x++)
-                {
-                    for (int y = 0; y < shellAreaToRefurbish.Height; y++)
+                    var corner = srd.startPos + new Point(1, 1);
+                    var spouse = srd.name;
+                    var shellPath = srd.shellType;
+                    var indexInSpouseMapSheet = srd.templateIndex;
+                    var spouseSpot = srd.startPos + srd.spousePosOffset;
+
+                    Rectangle shellAreaToRefurbish = new Rectangle(corner.X - 1, corner.Y - 1, 8, 12);
+                    ExtendMap(location, shellAreaToRefurbish.X + shellAreaToRefurbish.Width, shellAreaToRefurbish.Y + shellAreaToRefurbish.Height);
+
+
+                   // ExtendMap(location, 100, shellAreaToRefurbish.Height);
+
+                    // load shell
+
+                    if (appliedMapOverrides.Contains("spouse_room_" + spouse + "_shell"))
                     {
-                        if (location.map.GetLayer("Back").Tiles[shellAreaToRefurbish.X + x, shellAreaToRefurbish.Y + y] != null)
-                        {
-                            location.map.GetLayer("Back").Tiles[shellAreaToRefurbish.X + x, shellAreaToRefurbish.Y + y].Properties["FloorID"] = "spouse_hall_" + (Config.DecorateHallsIndividually ? spouse : "floor");
-                        }
+                        appliedMapOverrides.Remove("spouse_room_" + spouse + "_shell");
                     }
-                }
 
-                Dictionary<string, CharacterData> characterData = SHelper.GameContent.Load<Dictionary<string, CharacterData>>("Data\\Characters");
-                CharacterData spouseData = characterData[spouse];
-                if (spouseData == null)
-                {
-                    SMonitor.Log(level: LogLevel.Error, message: "Failed to load Room Data for " + spouse+ "; please make sure that NPC has spouse room data, or contact the maker of that NPC. If this NPC is not normally marriable, there will be no custom room.");
-                    return;
-                }
+                    location.ApplyMapOverride(shellPath, "spouse_room_" + spouse + "_shell", new Rectangle?(new Rectangle(0, 0, shellAreaToRefurbish.Width, shellAreaToRefurbish.Height)), new Rectangle?(shellAreaToRefurbish));
 
-               if( spouseData.SpouseRoom == null)
-                {
-                    SMonitor.Log(level: LogLevel.Error, message: "Failed to load Room for " + spouse +"; please ensure that the NPC has a spouse room created, or contact the one who made that NPC. If this NPC is not normally marriable, there will be no custom room.");
-                    return;
-
-                }
-
-
-
-                string map_path = spouseData.SpouseRoom.MapAsset;
-                if (map_path == "" || map_path == null)
-                {
-                    map_path = "spouseRooms";
-                }
-
-                SMonitor.Log("Map Path: |" + map_path + "|");
-
-                int width = spouseData.SpouseRoom.MapSourceRect.Width;
-                int height = spouseData.SpouseRoom.MapSourceRect.Height;
-
-                Rectangle areaToRefurbish = new Rectangle(corner.X, corner.Y, width, height);
-                Map refurbishedMap = Game1.game1.xTileContent.Load<Map>("Maps\\" + map_path);
-                List<KeyValuePair<Point, Tile>> bottom_row_tiles = new List<KeyValuePair<Point, Tile>>();
-                Layer front_layer = location.map.GetLayer("Front");
-                for (int x = areaToRefurbish.Left; x < areaToRefurbish.Right; x++)
-                {
-                    Point point = new Point(x, areaToRefurbish.Bottom - 1);
-                    Tile tile = front_layer?.Tiles[point.X, point.Y];
-                    if (tile != null)
+                    /*
+                    for (int x = 0; x < shellAreaToRefurbish.Width; x++)
                     {
-                        bottom_row_tiles.Add(new KeyValuePair<Point, Tile>(point, tile));
-                    }
-                }
-
-                if (appliedMapOverrides.Contains("spouse_room_" + spouse))
-                {
-                    appliedMapOverrides.Remove("spouse_room_" + spouse);
-                }
-
-                location.ApplyMapOverride(map_path, "spouse_room_" + spouse, spouseData.SpouseRoom.MapSourceRect, new Rectangle?(areaToRefurbish));
-                for (int x = 0; x < areaToRefurbish.Width; x++)
-                {
-                    for (int y = 0; y < areaToRefurbish.Height; y++)
-                    {
-                        if (refurbishedMap.GetLayer("Buildings")?.Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y] != null)
+                        for (int y = 0; y < shellAreaToRefurbish.Height; y++)
                         {
-                            SHelper.Reflection.GetMethod(location, "adjustMapLightPropertiesForLamp").Invoke(refurbishedMap.GetLayer("Buildings").Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y].TileIndex, areaToRefurbish.X + x, areaToRefurbish.Y + y, "Buildings");
-                        }
-                        if (y < areaToRefurbish.Height - 1 && refurbishedMap.GetLayer("Front")?.Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y] != null)
-                        {
-                            SHelper.Reflection.GetMethod(location, "adjustMapLightPropertiesForLamp").Invoke(refurbishedMap.GetLayer("Front").Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y].TileIndex, areaToRefurbish.X + x, areaToRefurbish.Y + y, "Front");
-                        }
-                       
-                    }
-                }
-                location.ReadWallpaperAndFloorTileData();
-                if (location.map.GetLayer("Paths") != null)
-                {
-                    bool spot_found = false;
-                    for (int x3 = areaToRefurbish.Left; x3 < areaToRefurbish.Right; x3++)
-                    {
-                        for (int y2 = areaToRefurbish.Top; y2 < areaToRefurbish.Bottom; y2++)
-                        {
-                            if (location.getTileIndexAt(new Point(x3, y2), "Paths") == 7)
+                            if (location.map.GetLayer("Back").Tiles[shellAreaToRefurbish.X + x, shellAreaToRefurbish.Y + y] != null)
                             {
-                                spot_found = true;
-                                if (first && location is FarmHouse)
-                                {
+                                location.map.GetLayer("Back").Tiles[shellAreaToRefurbish.X + x, shellAreaToRefurbish.Y + y].Properties["FloorID"] = "spouse_hall_" + (Config.DecorateHallsIndividually ? spouse : "floor");
+                            }
+                        }
+                    }
+                    */
 
-                                    (location as FarmHouse).spouseRoomSpot = new Point(x3, y2);
+                    Dictionary<string, CharacterData> characterData = SHelper.GameContent.Load<Dictionary<string, CharacterData>>("Data\\Characters");
+                    CharacterData spouseData = characterData[spouse];
+                    if (spouseData == null)
+                    {
+                        SMonitor.Log(level: LogLevel.Error, message: "Failed to load Room Data for " + spouse + "; please make sure that NPC has spouse room data, or contact the maker of that NPC. If this NPC is not normally marriable, there will be no custom room.");
+                        return;
+                    }
+
+                    if (spouseData.SpouseRoom == null)
+                    {
+                        SMonitor.Log(level: LogLevel.Error, message: "Failed to load Room for " + spouse + "; please ensure that the NPC has a spouse room created, or contact the one who made that NPC. If this NPC is not normally marriable, there will be no custom room.");
+                        return;
+
+                    }
+
+
+
+                    string map_path = spouseData.SpouseRoom.MapAsset;
+                    if (map_path == "" || map_path == null)
+                    {
+                        map_path = "spouseRooms";
+                    }
+
+                    SMonitor.Log("Map Path: |" + map_path + "|");
+
+                    int width = spouseData.SpouseRoom.MapSourceRect.Width;
+                    int height = spouseData.SpouseRoom.MapSourceRect.Height;
+
+                    Rectangle areaToRefurbish = new Rectangle(corner.X, corner.Y, width, height);
+                    Map refurbishedMap = Game1.game1.xTileContent.Load<Map>("Maps\\" + map_path);
+                    List<KeyValuePair<Point, Tile>> bottom_row_tiles = new List<KeyValuePair<Point, Tile>>();
+                    Layer front_layer = location.map.GetLayer("Front");
+                    for (int x = areaToRefurbish.Left; x < areaToRefurbish.Right; x++)
+                    {
+                        Point point = new Point(x, areaToRefurbish.Bottom - 1);
+                        Tile tile = front_layer?.Tiles[point.X, point.Y];
+                        if (tile != null)
+                        {
+                            bottom_row_tiles.Add(new KeyValuePair<Point, Tile>(point, tile));
+                        }
+                    }
+
+                    if (appliedMapOverrides.Contains("spouse_room_" + spouse))
+                    {
+                        appliedMapOverrides.Remove("spouse_room_" + spouse);
+                    }
+
+                    location.ApplyMapOverride(map_path, "spouse_room_" + spouse, spouseData.SpouseRoom.MapSourceRect, new Rectangle?(areaToRefurbish));
+                    for (int x = 0; x < areaToRefurbish.Width; x++)
+                    {
+                        for (int y = 0; y < areaToRefurbish.Height; y++)
+                        {
+                            if (refurbishedMap.GetLayer("Buildings")?.Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y] != null)
+                            {
+                                SHelper.Reflection.GetMethod(location, "adjustMapLightPropertiesForLamp").Invoke(refurbishedMap.GetLayer("Buildings").Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y].TileIndex, areaToRefurbish.X + x, areaToRefurbish.Y + y, "Buildings");
+                            }
+                            if (y < areaToRefurbish.Height - 1 && refurbishedMap.GetLayer("Front")?.Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y] != null)
+                            {
+                                SHelper.Reflection.GetMethod(location, "adjustMapLightPropertiesForLamp").Invoke(refurbishedMap.GetLayer("Front").Tiles[spouseData.SpouseRoom.MapSourceRect.X + x, spouseData.SpouseRoom.MapSourceRect.Y + y].TileIndex, areaToRefurbish.X + x, areaToRefurbish.Y + y, "Front");
+                            }
+
+                        }
+                    }
+                    location.ReadWallpaperAndFloorTileData();
+                    if (location.map.GetLayer("Paths") != null)
+                    {
+                        bool spot_found = false;
+                        for (int x3 = areaToRefurbish.Left; x3 < areaToRefurbish.Right; x3++)
+                        {
+                            for (int y2 = areaToRefurbish.Top; y2 < areaToRefurbish.Bottom; y2++)
+                            {
+                                if (location.getTileIndexAt(new Point(x3, y2), "Paths") == 7)
+                                {
+                                    spot_found = true;
+                                    if (first && location is FarmHouse)
+                                    {
+
+                                        (location as FarmHouse).spouseRoomSpot = new Point(x3, y2);
+                                    }
+                                    spouseSpot = new Point(x3, y2);
+                                    srd.spousePosOffset = spouseSpot - srd.startPos;
+                                    break;
                                 }
-                                spouseSpot = new Point(x3, y2);
-                                srd.spousePosOffset = spouseSpot - srd.startPos;
+                            }
+                            if (spot_found)
+                            {
                                 break;
                             }
                         }
-                        if (spot_found)
-                        {
-                            break;
-                        }
                     }
+                    location.setTileProperty(spouseSpot.X, spouseSpot.Y, "Back", "NoFurniture", "T");
+                    foreach (KeyValuePair<Point, Tile> kvp in bottom_row_tiles)
+                    {
+                        front_layer.Tiles[kvp.Key.X, kvp.Key.Y] = kvp.Value;
+                    }
+                    if (location is FarmHouse)
+                        currentRoomData[srd.name] = srd;
+                    else
+                        currentIslandRoomData[srd.name] = srd;
+                    SMonitor.Log("Exited");
                 }
-                location.setTileProperty(spouseSpot.X, spouseSpot.Y, "Back", "NoFurniture", "T");
-                foreach (KeyValuePair<Point, Tile> kvp in bottom_row_tiles)
-                {
-                    front_layer.Tiles[kvp.Key.X, kvp.Key.Y] = kvp.Value;
-                }
-                if (location is FarmHouse)
-                    currentRoomData[srd.name] = srd;
-                else
-                    currentIslandRoomData[srd.name] = srd;
-                SMonitor.Log("Exited");
             }
             catch (Exception ex)
             {
