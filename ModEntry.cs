@@ -93,7 +93,7 @@ namespace PolyamorySweetRooms
             );
             
             harmony.Patch(
-               original: AccessTools.Method(typeof(DecoratableLocation), "IsFloorableOrWallpaperableTile"),
+               original: AccessTools.Method(typeof(DecoratableLocation), "IsFloorableOrWallpaperableTile", new Type[] { typeof(int), typeof(int),typeof(string) }),
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.DecoratableLocation_IsFloorableOrWallpaperableTile_Prefix))
             );
             

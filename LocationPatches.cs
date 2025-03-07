@@ -256,7 +256,7 @@ namespace PolyamorySweetRooms
                     }
 
                     srd.shellType = i < orderedSpouses.Count - 1 ? "custom_spouse_room_open_right" : "custom_spouse_room_closed_right";
-                    if (i == 0 && __instance.upgradeLevel > 1)
+                    if (i == 0 && __instance.upgradeLevel > 2)
                     {
                         srd.shellType += "_2";
                     }
@@ -400,10 +400,10 @@ namespace PolyamorySweetRooms
 
                     location.ApplyMapOverride(shellPath, "spouse_room_" + spouse + "_shell", new Rectangle?(new Rectangle(0, 0, shellAreaToRefurbish.Width, shellAreaToRefurbish.Height)), new Rectangle?(shellAreaToRefurbish));
 
-                    /*
+                    
                     for (int x = 0; x < shellAreaToRefurbish.Width; x++)
                     {
-                        for (int y = 0; y < shellAreaToRefurbish.Height; y++)
+                        for (int y = 3; y < shellAreaToRefurbish.Height; y++)
                         {
                             if (location.map.GetLayer("Back").Tiles[shellAreaToRefurbish.X + x, shellAreaToRefurbish.Y + y] != null)
                             {
@@ -411,7 +411,7 @@ namespace PolyamorySweetRooms
                             }
                         }
                     }
-                    */
+                    
 
                     Dictionary<string, CharacterData> characterData = SHelper.GameContent.Load<Dictionary<string, CharacterData>>("Data\\Characters");
                     CharacterData spouseData = characterData[spouse];
