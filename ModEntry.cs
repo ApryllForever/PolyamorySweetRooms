@@ -29,7 +29,8 @@ namespace PolyamorySweetRooms
         public static IModHelper SHelper;
         public static ModConfig Config;
         int Goat = 0;
-        
+        int weddingDayCounter = 0;
+
         public static string dictPath = "ApryllForever.PolyamorySweetRooms/dict";
 
         public static List<string> JustEngagedList = new();
@@ -54,13 +55,15 @@ namespace PolyamorySweetRooms
         public static Dictionary<string, SpouseRoomData> currentRoomData = new Dictionary<string, SpouseRoomData>();
         public static Dictionary<string, SpouseRoomData> currentIslandRoomData = new Dictionary<string, SpouseRoomData>();
 
-        
+
         public override void Entry(IModHelper helper)
         {
             Config = helper.ReadConfig<ModConfig>();
 
             SMonitor = Monitor;
             SHelper = helper;
+
+            //helper.Events.Content.AssetRequested += this.OnAssetRequested; Could not get the coordinates correct, so... just doing it in CP. STILL.
 
             var harmony = new Harmony(ModManifest.UniqueID);
 
@@ -80,23 +83,23 @@ namespace PolyamorySweetRooms
                original: AccessTools.Method(typeof(FarmHouse), nameof(FarmHouse.loadSpouseRoom)),
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.FarmHouse_loadSpouseRoom_Prefix))
             );
-           // harmony.Patch(
+            // harmony.Patch(
 
             //orig purpose of this patch was to bypass showspouseroom, it seems. I am using show spouse room. Let's murder this patch.
 
-           //    original: AccessTools.Method(typeof(FarmHouse), nameof(FarmHouse.updateFarmLayout)),
-           //    prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.FarmHouse_updateFarmLayout_Prefix))
-           // );
+            //    original: AccessTools.Method(typeof(FarmHouse), nameof(FarmHouse.updateFarmLayout)),
+            //    prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.FarmHouse_updateFarmLayout_Prefix))
+            // );
             harmony.Patch(
                original: AccessTools.Method(typeof(DecoratableLocation), nameof(DecoratableLocation.MakeMapModifications)),
                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.DecoratableLocation_MakeMapModifications_Postfix))
             );
-            
+
             harmony.Patch(
-               original: AccessTools.Method(typeof(DecoratableLocation), "IsFloorableOrWallpaperableTile", new Type[] { typeof(int), typeof(int),typeof(string) }),
+               original: AccessTools.Method(typeof(DecoratableLocation), "IsFloorableOrWallpaperableTile", new Type[] { typeof(int), typeof(int), typeof(string) }),
                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ModEntry.DecoratableLocation_IsFloorableOrWallpaperableTile_Prefix))
             );
-            
+
 
             // NetWorldState patch 
 
@@ -130,7 +133,7 @@ namespace PolyamorySweetRooms
             SHelper.Events.GameLoop.ReturnedToTitle += GameLoop_ReturnedToTitle;
             SHelper.Events.GameLoop.DayStarted += OnDayStarted;
             SHelper.Events.Specialized.LoadStageChanged += OnLoadStateChanged;
-            
+
         }
 
         private static void NPC_engagementResponse_Postfix(NPC __instance, Farmer who, bool asRoommate = false)
@@ -243,14 +246,20 @@ namespace PolyamorySweetRooms
 
                 }
             }*/
+            //Attempt to fix xTile layer crash
 
+            ///foreach (Farmer farmer in (Game1.getAllFarmers())) 
+              //  {
+            //    FarmHouse farmHouse = Utility.getHomeOfFarmer(farmer);
 
-
-                }
+             //   ExtendMap(farmHouse, 200, 200);
+             //       }
+        }
 
         private void OnDayStarted(object sender, DayStartedEventArgs e)
         {
-           
+         
+
         }
 
 
@@ -317,8 +326,6 @@ namespace PolyamorySweetRooms
               getValue: () => Config.DecorateHallsIndividually,
               setValue: value => Config.DecorateHallsIndividually = value
           );
-
-
         }
 
         public static void ResetRooms(Farmer who, FarmHouse farmHouse, HashSet<string> ____appliedMapOverrides)
@@ -336,10 +343,7 @@ namespace PolyamorySweetRooms
                 {
                     SMonitor.Log($"Error adding {srd.name} room data, template {srd.templateName} start pos {srd.startPos}: \n\n{ex}", LogLevel.Error);
                 }
-
                 FarmHouse_loadSpouseRoom_Prefix(farmHouse, ____appliedMapOverrides);
-
-        
             }
 
         }
@@ -380,16 +384,10 @@ namespace PolyamorySweetRooms
         }
 
 
-
-
-
         private static bool showSpouseRoom_Prefix(FarmHouse __instance)
         {
             if (!Config.EnableMod )
-                return true;
-
-          
-
+                return true;        
             bool displayingspouseroom = SHelper.Reflection.GetField<bool>(__instance, "displayingSpouseRoom").GetValue();
 
             
@@ -432,15 +430,14 @@ namespace PolyamorySweetRooms
 
                     }
 
-                    
-
-
-
-
+/*
+ *                  I don't extremely see the need for this, and is causing users distress.
+ * 
+ * 
                     foreach ( string wives in listowives )
                 {
 
-                 //   if (num && !displayingspouseroom)
+                    if (num && !displayingspouseroom)
                     {
                         Point corner;
                         corner = __instance.GetSpouseRoomCorner();
@@ -523,6 +520,9 @@ namespace PolyamorySweetRooms
                     }
 
                 }
+*/
+
+
                 __instance.loadObjects();
                 if (__instance.upgradeLevel == 3)
                 {
@@ -544,20 +544,55 @@ namespace PolyamorySweetRooms
                         FarmHouse_loadSpouseRoom_Prefix(__instance, ____appliedMapOverrides);
                     }
                 }
-
-
-
-
                 return false;
 
             }
-
-
-
-
             return true;
         }
 
+        // otter
+        //fox
+        //Bear
+        //Wolf
+        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
+        {
+            /*if (e.Name.IsEquivalentTo("Maps/FarmHouse"))
+            {
+                e.Edit(asset =>
+                {
+                    IAssetDataForMap editor = asset.AsMap();
+                    Map map = editor.Data;
+                    Map mapPatch = SHelper.ModContent.Load<Map>("Maps/FarmHousePatch.tmx");
+
+                    // editor.ExtendMap(50, 190);
+                    //SMonitor.Log($"Extending Farmhouse for  to prevent the Dreaded Engagement House Crash Bug.");
+
+                    editor.ExtendMap(160, 240);
+                    editor.PatchMap(mapPatch,new Rectangle (36,0,0,0), new Rectangle(160, 120, 0, 0));
+
+
+                    foreach (Farmer f in Game1.getAllFarmers())
+                    {
+                        if (f == null || f.currentLocation == null)
+                           continue;
+                     //FarmHouse farmHouse = Utility.getHomeOfFarmer(f);
+
+                       // if (farmHouse == null || farmHouse.owner == null)
+                        //    continue;
+                       // if (Game1.player.HouseUpgradeLevel >=1)
+                       //Game1.player.HouseUpgradeLevel.Equals(1);
+                        {
+                            editor.ExtendMap(100,200);
+                            editor.PatchMap(mapPatch, null, new Rectangle(36, 0, 200,280));
+
+                            SMonitor.Log($"Extending Farmhouse for {f.Name} to prevent the Dreaded Engagement House Crash Bug.");
+                        }
+
+                    }
+
+                });
+            }*/
+        }
 
 
     }

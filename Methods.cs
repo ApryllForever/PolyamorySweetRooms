@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
@@ -33,40 +34,8 @@ namespace PolyamorySweetRooms
             Dictionary<string, object> spouses = new Dictionary<string, object>();
             if (farmer != null)
             {
-                /*
-                //farmer = GetOwner(Game1.currentLocation);
-
-                if (farmer == null && Game1.currentLocation is FarmHouse)
-                {
-                    farmer = GetOwner(Game1.currentLocation);
-                    /*
-                    if (Game1.IsMasterGame)
-                    {
-                        farmer = Game1.player;
-                    }
-                    else
-                    {
-                        foreach(Farmer farmur in Game1.getAllFarmers() )
-                        {
-                             farmer = Game1.player;
-
-                        }
-                    }
-
-                }
-
-                if ( Game1.currentLocation is FarmHouse)
-                {
-                    farmer = GetOwner(Game1.currentLocation);
-
-                } */
-
-
-
-
                 if (all < 0)
                 {
-
                     {
                         NPC ospouse = farmer.getSpouse();
 
@@ -75,7 +44,6 @@ namespace PolyamorySweetRooms
                             spouses[ospouse.Name] = ospouse;
                         }
                     }
-
                 }
                 foreach (string friend in farmer.friendshipData.Keys)
                 {
@@ -83,6 +51,11 @@ namespace PolyamorySweetRooms
                     {
                         spouses[friend] = Game1.getCharacterFromName(friend, true);
                     }
+                    if (farmer.friendshipData[friend].IsEngaged())
+                    {
+                       spouses.Remove(friend);
+                    }
+
                 }
                 foreach (var pair in farmer.team.friendshipData.Pairs)
                 {
@@ -95,6 +68,9 @@ namespace PolyamorySweetRooms
                         spouses[spouse.Name] = spouse;
                     }
                 }
+               
+
+
             }
             return spouses;
         }
