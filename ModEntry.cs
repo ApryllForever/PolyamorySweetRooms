@@ -315,14 +315,14 @@ namespace PolyamorySweetRooms
            );
             configMenu.AddBoolOption(
                mod: ModManifest,
-               name: () => "Mod Enabled?",
+               name: () => Helper.Translation.Get("config.enable-mod.name"),
                getValue: () => Config.EnableMod,
                setValue: value => Config.EnableMod = value
            );
 
             configMenu.AddBoolOption(
               mod: ModManifest,
-              name: () => "Decorate Halls Individually?",
+              name: () => Helper.Translation.Get("config.decorate-halls-individually.name"),
               getValue: () => Config.DecorateHallsIndividually,
               setValue: value => Config.DecorateHallsIndividually = value
           );
